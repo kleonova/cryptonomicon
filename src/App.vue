@@ -2,19 +2,19 @@
   <div class="w-screen min-h-screen bg-gray-100">
     <div class="container mx-auto flex flex-col items-center p-4">
       <div class="container">
-        <!--	field add			-->
+        <!-- field add -->
         <section>
           <div class="flex">
             <div class="max-w-xs">
-              <label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
+              <label for="ticker" class="block text-sm font-medium text-gray-700">Тикер</label>
 
               <div class="mt-1 relative rounded-md shadow-md">
                 <input
                   v-model="ticker"
                   @keydown.enter="add"
                   type="text"
-                  name="wallet"
-                  id="wallet"
+                  name="ticker"
+                  id="ticker"
                   class="
                     block
                     w-full
@@ -83,12 +83,94 @@
           </button>
         </section>
 
+        <!-- filter -->
+        <div class="my-2">
+          <label for="filter" class="block text-sm font-medium text-gray-700">Фильтр</label>
+
+          <div class="mt-1 relative rounded-md shadow-md">
+            <input
+              v-model="filter"
+              id="filter"
+              type="text"
+              class="
+                block
+                w-full
+                p-2
+                border-gray-300
+                text-gray-900
+                focus:outline-none focus:ring-gray-500 focus:border-gray-500
+                sm:text-sm
+                rounded-md
+              "
+              autocomplete="off"
+              placeholder="Например DOGE"
+              @input="dropPage"
+            />
+          </div>
+
+          <div class="my-2">
+            <button
+              class="
+                inline-flex
+                items-center
+                py-2
+                px-4
+                border border-transparent
+                shadow-sm
+                text-sm
+                leading-4
+                font-medium
+                rounded-full
+                text-white
+                bg-gray-600
+                hover:bg-gray-700
+                transition-colors
+                duration-300
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+                disabled:opacity-75
+              "
+              :disabled="page === 1"
+              @click="page--"
+            >
+              Назад
+            </button>
+
+            <span class="mx-2">{{ page }}</span>
+
+            <button
+              class="
+                inline-flex
+                items-center
+                py-2
+                px-4
+                border border-transparent
+                shadow-sm
+                text-sm
+                leading-4
+                font-medium
+                rounded-full
+                text-white
+                bg-gray-600
+                hover:bg-gray-700
+                transition-colors
+                duration-300
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+                disabled:opacity-75
+              "
+              :disabled="!hasNextPage"
+              @click="page++"
+            >
+              Вперед
+            </button>
+          </div>
+        </div>
+
         <!--	list tickers			-->
-        <template v-if="tickers.length">
+        <template v-if="filteredTickersOnPage.length">
           <hr class="w-full border-t border-gray-600 my-4" />
           <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div
-              v-for="t in tickers"
+              v-for="t in filteredTickersOnPage"
               :key="t.name"
               @click="selectTicker(t)"
               class="bg-white overflow-hidden shadow rounded-lg cursor-pointer"
@@ -124,8 +206,9 @@
                     fill-rule="evenodd"
                     d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                     clip-rule="evenodd"
-                  ></path></svg
-                >Удалить
+                  />
+                </svg>
+                Удалить
               </button>
             </div>
           </dl>
@@ -162,11 +245,17 @@ export default {
   name: 'App',
   data() {
     return {
-      ticker: '',
+      coinList: [],
       tickers: [],
+      /* */
+      ticker: '',
+      /* */
       selectedTicket: null,
       graph: [],
-      coinList: [],
+      /* */
+      page: 1,
+      countOnPage: 6,
+      filter: '',
     }
   },
   computed: {
@@ -187,17 +276,35 @@ export default {
         .sort((a, b) => (a.Symbol > b.Symbol ? 1 : -1))
         .slice(0, 4)
     },
+    filteredTickers() {
+      return this.tickers.filter(({ name }) => name.toLowerCase().includes(this.filter.toLowerCase()))
+    },
+    filteredTickersOnPage() {
+      const start = (this.page - 1) * this.countOnPage
+      const end = this.page * this.countOnPage
+
+      return this.filteredTickers.slice(start, end)
+    },
+    hasNextPage() {
+      return this.filteredTickers.length > this.page * this.countOnPage
+    },
     hasDuplicate() {
       return !!this.tickers.find(({ name }) => name === this.ticker)
     },
   },
   created() {
+    this.getFilterState()
     this.getCoinList()
     this.getTickersFromLS()
   },
+  watch: {
+    page() {
+      this.setFilterState()
+    },
+  },
   methods: {
     add() {
-      if (!this.ticker) return
+      if (!this.ticker || this.hasDuplicate) return
 
       const newTicker = {
         name: this.ticker,
@@ -210,6 +317,7 @@ export default {
       this.tickers.push(newTicker)
 
       this.selectTicker(newTicker)
+      this.filter = ''
 
       // сохранить в LS
       localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
@@ -236,7 +344,7 @@ export default {
         if (this.selectedTicket?.name === tickerName) {
           this.graph.push(price)
         }
-      }, 5000)
+      }, 10000)
     },
     handleDelete(tickerToRemove) {
       if (this.selectedTicket === tickerToRemove) {
@@ -280,6 +388,19 @@ export default {
 
         this.tickers.forEach((ticker) => this.subscribeToUpdates(ticker.name))
       }
+    },
+    dropPage() {
+      this.page = 1
+      this.setFilterState()
+    },
+    getFilterState() {
+      const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
+      this.filter = windowData?.filter || ''
+      this.page = windowData?.page || 1
+    },
+    setFilterState() {
+      // сохранить значение фильтра
+      window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`)
     },
   },
 }
