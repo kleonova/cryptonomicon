@@ -245,14 +245,14 @@ export default {
   name: 'App',
   data() {
     return {
-      coinList: [],
       tickers: [],
-      /* */
+      /* form */
       ticker: '',
-      /* */
+      coinList: [],
+      /* graph */
       selectedTicket: null,
       graph: [],
-      /* */
+      /* filter */
       page: 1,
       countOnPage: 6,
       filter: '',
