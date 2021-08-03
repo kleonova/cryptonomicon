@@ -193,6 +193,7 @@ export default {
   },
   created() {
     this.getCoinList()
+    this.getTickersFromLS()
   },
   methods: {
     add() {
@@ -204,11 +205,23 @@ export default {
       }
 
       /* получить данные */
+      this.subscribeToUpdates(newTicker.name)
+
+      this.tickers.push(newTicker)
+
+      this.selectTicker(newTicker)
+
+      // сохранить в LS
+      localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
+
+      this.ticker = ''
+    },
+    subscribeToUpdates(tickerName) {
       setInterval(async () => {
-        const addedTickerObj = this.tickers.find(({ name }) => name === newTicker.name)
+        const addedTickerObj = this.tickers.find(({ name }) => name === tickerName)
 
         const fetchResponse = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
+          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
         )
 
         const data = await fetchResponse.json()
@@ -220,16 +233,10 @@ export default {
         }
 
         // добавить значение в график
-        if (this.selectedTicket?.name === newTicker.name) {
+        if (this.selectedTicket?.name === tickerName) {
           this.graph.push(price)
         }
       }, 5000)
-
-      this.tickers.push(newTicker)
-
-      this.selectTicker(newTicker)
-
-      this.ticker = ''
     },
     handleDelete(tickerToRemove) {
       if (this.selectedTicket === tickerToRemove) {
@@ -263,6 +270,15 @@ export default {
         this.coinList = Object.values(data.Data)
       } else {
         console.error('Ошибка при получении данных')
+      }
+    },
+    getTickersFromLS() {
+      const tikersData = localStorage.getItem('cryptonomicon-list')
+
+      if (tikersData) {
+        this.tickers = JSON.parse(tikersData)
+
+        this.tickers.forEach((ticker) => this.subscribeToUpdates(ticker.name))
       }
     },
   },
