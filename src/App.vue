@@ -104,7 +104,6 @@
               "
               autocomplete="off"
               placeholder="Например DOGE"
-              @input="dropPage"
             />
           </div>
 
@@ -130,7 +129,7 @@
                 disabled:opacity-75
               "
               :disabled="page === 1"
-              @click="page--"
+              @click="setPage(page - 1)"
             >
               Назад
             </button>
@@ -158,23 +157,23 @@
                 disabled:opacity-75
               "
               :disabled="!hasNextPage"
-              @click="page++"
+              @click="setPage(page + 1)"
             >
               Вперед
             </button>
           </div>
         </div>
 
-        <!--	list tickers			-->
-        <template v-if="filteredTickersOnPage.length">
+        <!-- list tickers -->
+        <template v-if="paginatedTickers.length">
           <hr class="w-full border-t border-gray-600 my-4" />
           <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div
-              v-for="t in filteredTickersOnPage"
+              v-for="t in paginatedTickers"
               :key="t.name"
               @click="selectTicker(t)"
               class="bg-white overflow-hidden shadow rounded-lg cursor-pointer"
-              :class="{ 'border-purple-800 border-solid border-2': selectedTicket === t }"
+              :class="{ 'border-purple-800 border-solid border-2': selectedTicker === t }"
             >
               <div class="px-4 py-5 sm:p-6 text-center">
                 <dt class="text-sm font-medium text-gray-500 truncate">{{ t.name }} - USD</dt>
@@ -216,25 +215,33 @@
         </template>
 
         <!--	graph			-->
-        <section class="relative" v-if="selectedTicket">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ selectedTicket.name }} - USD</h3>
+        <template v-if="selectedTicker">
+          <section class="relative">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">{{ selectedTicker.name }} - USD</h3>
 
-          <div class="flex items-end border-gray-600 border-b border-l h-64">
-            <div v-for="(bar, indexBar) in normalizeGraph" :key="indexBar" class="bg-purple-800 border w-10" :style="`height: ${bar}%`" />
-          </div>
+            <div class="flex items-end border-gray-600 border-b border-l h-64">
+              <div
+                v-for="(bar, indexBar) in normalizedGraph"
+                :key="indexBar"
+                class="bg-purple-800 border w-10"
+                :style="`height: ${bar}%`"
+              />
+            </div>
 
-          <button @click="selectedTicket = null" type="button" class="absolute top-0 right-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" x="0" y="0" viewBox="0 0 511.76 511.76" xml:space="preserve">
-              <g>
-                <path
-                  d="M436.896,74.869c-99.84-99.819-262.208-99.819-362.048,0c-99.797,99.819-99.797,262.229,0,362.048    c49.92,49.899,115.477,74.837,181.035,74.837s131.093-24.939,181.013-74.837C536.715,337.099,536.715,174.688,436.896,74.869z     M361.461,331.317c8.341,8.341,8.341,21.824,0,30.165c-4.16,4.16-9.621,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    l-75.413-75.435l-75.392,75.413c-4.181,4.16-9.643,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    c-8.341-8.341-8.341-21.845,0-30.165l75.392-75.413l-75.413-75.413c-8.341-8.341-8.341-21.845,0-30.165    c8.32-8.341,21.824-8.341,30.165,0l75.413,75.413l75.413-75.413c8.341-8.341,21.824-8.341,30.165,0    c8.341,8.32,8.341,21.824,0,30.165l-75.413,75.413L361.461,331.317z"
-                  fill="#718096"
-                  data-original="#000000"
-                ></path>
-              </g>
-            </svg>
-          </button>
-        </section>
+            <button @click="selectedTicker = null" type="button" class="absolute top-0 right-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" x="0" y="0" viewBox="0 0 511.76 511.76" xml:space="preserve">
+                <g>
+                  <path
+                    d="M436.896,74.869c-99.84-99.819-262.208-99.819-362.048,0c-99.797,99.819-99.797,262.229,0,362.048    c49.92,49.899,115.477,74.837,181.035,74.837s131.093-24.939,181.013-74.837C536.715,337.099,536.715,174.688,436.896,74.869z     M361.461,331.317c8.341,8.341,8.341,21.824,0,30.165c-4.16,4.16-9.621,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    l-75.413-75.435l-75.392,75.413c-4.181,4.16-9.643,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    c-8.341-8.341-8.341-21.845,0-30.165l75.392-75.413l-75.413-75.413c-8.341-8.341-8.341-21.845,0-30.165    c8.32-8.341,21.824-8.341,30.165,0l75.413,75.413l75.413-75.413c8.341-8.341,21.824-8.341,30.165,0    c8.341,8.32,8.341,21.824,0,30.165l-75.413,75.413L361.461,331.317z"
+                    fill="#718096"
+                    data-original="#000000"
+                  ></path>
+                </g>
+              </svg>
+            </button>
+          </section>
+          <div class="mt-2">Не принимайте график на веру! Сбит масштаб.</div>
+        </template>
       </div>
     </div>
   </div>
@@ -250,7 +257,7 @@ export default {
       ticker: '',
       coinList: [],
       /* graph */
-      selectedTicket: null,
+      selectedTicker: null,
       graph: [],
       /* filter */
       page: 1,
@@ -259,13 +266,15 @@ export default {
     }
   },
   computed: {
-    normalizeGraph() {
+    normalizedGraph() {
       const maxValue = Math.max(...this.graph)
+      const minValue = Math.min(...this.graph)
 
-      // const minValue = Math.min(...this.graph)
-      // return this.graph.map((value) => 5 + ((value - minValue) * 95) / (maxValue - minValue))
+      if (maxValue === minValue) {
+        return this.graph.map(() => 50)
+      }
 
-      return this.graph.map((value) => (value * 100) / maxValue)
+      return this.graph.map((value) => 5 + ((value - minValue) * 95) / (maxValue - minValue))
     },
     filteredCoinList() {
       return this.coinList
@@ -276,20 +285,29 @@ export default {
         .sort((a, b) => (a.Symbol > b.Symbol ? 1 : -1))
         .slice(0, 4)
     },
+    startIndex() {
+      return (this.page - 1) * this.countOnPage
+    },
+    endIndex() {
+      return this.page * this.countOnPage
+    },
     filteredTickers() {
       return this.tickers.filter(({ name }) => name.toLowerCase().includes(this.filter.toLowerCase()))
     },
-    filteredTickersOnPage() {
-      const start = (this.page - 1) * this.countOnPage
-      const end = this.page * this.countOnPage
-
-      return this.filteredTickers.slice(start, end)
+    paginatedTickers() {
+      return this.filteredTickers.slice(this.startIndex, this.endIndex)
     },
     hasNextPage() {
-      return this.filteredTickers.length > this.page * this.countOnPage
+      return this.filteredTickers.length > this.endIndex
     },
     hasDuplicate() {
-      return !!this.tickers.find(({ name }) => name === this.ticker)
+      return !!this.tickers.find(({ name }) => name.toLowerCase() === this.ticker.toLowerCase())
+    },
+    pageStateOptions() {
+      return {
+        filter: this.filter,
+        page: this.page,
+      }
     },
   },
   created() {
@@ -298,11 +316,40 @@ export default {
     this.getTickersFromLS()
   },
   watch: {
-    page() {
-      this.setFilterState()
+    tickers() {
+      // сохранить в LS
+      localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
+    },
+    pageStateOptions(value) {
+      window.history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`)
+    },
+    paginatedTickers() {
+      if (this.paginatedTickers.length === 0 && this.page > 1) {
+        this.page -= 1
+      }
+    },
+    selectedTicker() {
+      this.graph = []
+    },
+    filter() {
+      this.setPage(1)
     },
   },
   methods: {
+    /* form */
+    async getCoinList() {
+      // Получить все доступные валюты
+      const fetchResponse = await fetch(
+        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
+      )
+
+      const data = await fetchResponse.json()
+      if (data && data?.Data) {
+        this.coinList = Object.values(data.Data)
+      } else {
+        console.error('Ошибка при получении данных')
+      }
+    },
     add() {
       if (!this.ticker || this.hasDuplicate) return
 
@@ -314,16 +361,22 @@ export default {
       /* получить данные */
       this.subscribeToUpdates(newTicker.name)
 
-      this.tickers.push(newTicker)
+      // this.tickers.push(newTicker)
+      this.tickers = [...this.tickers, newTicker]
 
       this.selectTicker(newTicker)
+
       this.filter = ''
-
-      // сохранить в LS
-      localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers))
-
       this.ticker = ''
     },
+    selectAutoTicker(autoTicker) {
+      this.ticker = autoTicker.Symbol
+
+      if (!this.hasDuplicate) {
+        this.add()
+      }
+    },
+    /* (common) */
     subscribeToUpdates(tickerName) {
       setInterval(async () => {
         const addedTickerObj = this.tickers.find(({ name }) => name === tickerName)
@@ -341,66 +394,40 @@ export default {
         }
 
         // добавить значение в график
-        if (this.selectedTicket?.name === tickerName) {
+        if (this.selectedTicker?.name === tickerName) {
           this.graph.push(price)
         }
       }, 10000)
     },
-    handleDelete(tickerToRemove) {
-      if (this.selectedTicket === tickerToRemove) {
-        this.selectedTicket = null
-      }
-
-      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
-    },
-    selectAutoTicker(autoTicker) {
-      this.ticker = autoTicker.Symbol
-
-      if (!this.hasDuplicate) {
-        this.add()
-      }
-    },
-    selectTicker(ticker) {
-      this.selectedTicket = ticker
-      this.graph = []
-    },
-    /**
-     * Получить все доступные валюты
-     * @returns {Promise<void>}
-     */
-    async getCoinList() {
-      const fetchResponse = await fetch(
-        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
-      )
-
-      const data = await fetchResponse.json()
-      if (data && data?.Data) {
-        this.coinList = Object.values(data.Data)
-      } else {
-        console.error('Ошибка при получении данных')
-      }
-    },
+    /* list */
     getTickersFromLS() {
-      const tikersData = localStorage.getItem('cryptonomicon-list')
+      const tickersData = localStorage.getItem('cryptonomicon-list')
 
-      if (tikersData) {
-        this.tickers = JSON.parse(tikersData)
+      if (tickersData) {
+        this.tickers = JSON.parse(tickersData)
 
         this.tickers.forEach((ticker) => this.subscribeToUpdates(ticker.name))
       }
     },
-    dropPage() {
-      this.page = 1
-      this.setFilterState()
+    handleDelete(tickerToRemove) {
+      if (this.selectedTicker === tickerToRemove) {
+        this.selectedTicker = null
+      }
+
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
     },
+    /* filter */
     getFilterState() {
       const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
       this.filter = windowData?.filter || ''
       this.page = windowData?.page || 1
     },
-    setFilterState() {
-      // сохранить значение фильтра
-      window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`)
+    setPage(value) {
+      this.page = value
+    },
+    /* graph */
+    selectTicker(ticker) {
+      this.selectedTicker = ticker
     },
   },
 }
