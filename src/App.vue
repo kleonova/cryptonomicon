@@ -103,7 +103,7 @@
                 rounded-md
               "
               autocomplete="off"
-              placeholder="Например DOGE"
+              placeholder=""
             />
           </div>
 
@@ -178,7 +178,7 @@
               <div class="px-4 py-5 sm:p-6 text-center">
                 <dt class="text-sm font-medium text-gray-500 truncate">{{ t.name }} - USD</dt>
                 <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                  {{ t.price }}
+                  {{ formatPrice(t.price) }}
                 </dd>
               </div>
               <div class="w-full border-t border-gray-200"></div>
@@ -195,7 +195,7 @@
                   py-4
                   sm:px-6
                   text-md text-gray-500
-                  hover:text-gray-600 hover:bg-gray-200 hover:opacity-20
+                  hover:text-gray-600 hover:bg-gray-200
                   transition-all
                   focus:outline-none
                 "
@@ -248,6 +248,8 @@
 </template>
 
 <script>
+import { subscribeToTicker, unsubscribeFromTicker } from './api'
+
 export default {
   name: 'App',
   data() {
@@ -336,6 +338,16 @@ export default {
     },
   },
   methods: {
+    /* */
+    formatPrice(price) {
+      if (price === '-') {
+        return price
+      }
+
+      const floatPrice = parseFloat(price)
+
+      return floatPrice > 1 ? floatPrice.toFixed(2) : floatPrice.toPrecision(2)
+    },
     /* form */
     async getCoinList() {
       // Получить все доступные валюты
@@ -350,25 +362,6 @@ export default {
         console.error('Ошибка при получении данных')
       }
     },
-    add() {
-      if (!this.ticker || this.hasDuplicate) return
-
-      const newTicker = {
-        name: this.ticker,
-        price: '-',
-      }
-
-      /* получить данные */
-      this.subscribeToUpdates(newTicker.name)
-
-      // this.tickers.push(newTicker)
-      this.tickers = [...this.tickers, newTicker]
-
-      this.selectTicker(newTicker)
-
-      this.filter = ''
-      this.ticker = ''
-    },
     selectAutoTicker(autoTicker) {
       this.ticker = autoTicker.Symbol
 
@@ -376,51 +369,60 @@ export default {
         this.add()
       }
     },
-    /* (common) */
-    subscribeToUpdates(tickerName) {
-      setInterval(async () => {
-        const addedTickerObj = this.tickers.find(({ name }) => name === tickerName)
+    /* */
+    add() {
+      const currentTicker = {
+        name: this.ticker,
+        price: '-',
+      }
 
-        const fetchResponse = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
-        )
-
-        const data = await fetchResponse.json()
-        const price = data?.USD
-
-        if (addedTickerObj && price) {
-          // toPrecision - два значачих знака
-          addedTickerObj.price = price > 1 ? price.toFixed(2) : price.toPrecision(2)
-        }
-
-        // добавить значение в график
-        if (this.selectedTicker?.name === tickerName) {
-          this.graph.push(price)
-        }
-      }, 10000)
+      this.tickers = [...this.tickers, currentTicker]
+      this.ticker = ''
+      this.filter = ''
+      subscribeToTicker(currentTicker.name, (newPrice) => this.updateTicker(currentTicker.name, newPrice))
     },
+    updateTicker(tickerName, price) {
+      this.tickers
+        .filter((t) => t.name === tickerName)
+        .forEach((t) => {
+          if (t === this.selectedTicker) {
+            this.graph.push(price)
+          }
+          t.price = price
+        })
+    },
+
     /* list */
     getTickersFromLS() {
       const tickersData = localStorage.getItem('cryptonomicon-list')
 
       if (tickersData) {
         this.tickers = JSON.parse(tickersData)
-
-        this.tickers.forEach((ticker) => this.subscribeToUpdates(ticker.name))
+        this.tickers.forEach((ticker) => {
+          subscribeToTicker(ticker.name, (newPrice) => this.updateTicker(ticker.name, newPrice))
+        })
       }
+
+      setInterval(this.updateTickers, 5000)
     },
     handleDelete(tickerToRemove) {
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
       if (this.selectedTicker === tickerToRemove) {
         this.selectedTicker = null
       }
-
-      this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
+      unsubscribeFromTicker(tickerToRemove.name)
     },
     /* filter */
     getFilterState() {
       const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
-      this.filter = windowData?.filter || ''
-      this.page = windowData?.page || 1
+
+      const VALID_KEYS = ['filter', 'page']
+
+      VALID_KEYS.forEach((key) => {
+        if (windowData[key]) {
+          this[key] = windowData[key]
+        }
+      })
     },
     setPage(value) {
       this.page = value
