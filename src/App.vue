@@ -247,7 +247,7 @@
               {{ selectedTicker.name }} - USD
             </h3>
 
-            <div class="flex items-end border-gray-600 border-b border-l h-64">
+            <div class="flex items-end border-gray-600 border-b border-l h-64" ref="graph">
               <div
                 v-for="(bar, indexBar) in normalizedGraph"
                 :key="indexBar"
@@ -297,6 +297,7 @@
         /* graph */
         selectedTicker: null,
         graph: [],
+        maxGraphElements: 0,
         /* filter */
         page: 1,
         countOnPage: 6,
@@ -370,6 +371,12 @@
       this.getCoinList()
       this.getTickersFromLS()
     },
+    mounted() {
+      window.addEventListener('resize', this.calculateMaxGraphElements)
+    },
+    beforeUnmount() {
+      window.removeEventListener('resize', this.calculateMaxGraphElements)
+    },
     watch: {
       tickers() {
         // сохранить в LS
@@ -389,9 +396,18 @@
       },
       selectedTicker() {
         this.graph = []
+
+        if (this.selectedTicker) {
+          this.$nextTick(() => {
+            this.calculateMaxGraphElements()
+          })
+        }
       },
       filter() {
         this.setPage(1)
+      },
+      maxGraphElements() {
+        this.cutGraph()
       },
     },
     methods: {
@@ -445,13 +461,12 @@
           .filter((t) => t.name === tickerName)
           .forEach((t) => {
             if (t === this.selectedTicker) {
-              console.log(price)
               this.graph.push(price)
+              this.cutGraph()
             }
             t.price = price
           })
       },
-
       /* list */
       getTickersFromLS() {
         const tickersData = localStorage.getItem('cryptonomicon-list')
@@ -488,6 +503,15 @@
         this.page = value
       },
       /* graph */
+      calculateMaxGraphElements() {
+        const widthGraph = this.$refs.graph?.clientWidth
+        this.maxGraphElements = widthGraph ? Math.floor(widthGraph / 38) : 0
+      },
+      cutGraph() {
+        if (this.graph.length > this.maxGraphElements) {
+          this.graph = this.graph.slice(-1 * this.maxGraphElements)
+        }
+      },
       selectTicker(ticker) {
         this.selectedTicker = ticker
       },
