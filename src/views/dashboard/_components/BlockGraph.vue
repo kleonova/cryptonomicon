@@ -36,7 +36,9 @@
         default: () => ({}),
       },
     },
-    emits: ['close'],
+    emits: {
+      close: null,
+    },
     data() {
       return {
         graph: [],

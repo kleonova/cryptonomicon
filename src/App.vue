@@ -3,10 +3,10 @@
     <div class="container mx-auto flex flex-col items-center p-4">
       <div class="container">
         <!-- field add -->
-        <block-add @add="addTicker" />
+        <block-add :tickers="tickers" @add="addTicker" />
 
         <!-- filter -->
-        <div class="my-2">
+        <div class="my-4">
           <label for="filter" class="block text-sm font-medium text-gray-700">Фильтр</label>
 
           <div class="mt-1 relative rounded-md shadow-md">
@@ -29,7 +29,7 @@
             />
           </div>
 
-          <div class="my-2">
+          <div class="my-4">
             <button
               class="
                 inline-flex
@@ -84,11 +84,12 @@
               Вперед
             </button>
           </div>
+
+          <hr class="w-full border-t border-gray-600 my-4" />
         </div>
 
         <!-- list tickers -->
         <template v-if="paginatedTickers.length">
-          <hr class="w-full border-t border-gray-600 my-4" />
           <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div
               v-for="t in paginatedTickers"

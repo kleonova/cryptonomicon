@@ -70,6 +70,13 @@
     components: {
       ButtonAdd,
     },
+    props: {
+      tickers: {
+        type: Array,
+        required: false,
+        default: () => [],
+      },
+    },
     emits: {
       add: (value) => {
         return typeof value === 'string' && value.length > 0
@@ -107,9 +114,7 @@
         return matchedCoinList.slice(0, 4)
       },
       hasDuplicate() {
-        // todo need fix
-        // return !!this.tickers.find(({ name }) => name.toLowerCase() === this.ticker.toLowerCase())
-        return false
+        return !!this.tickers.find(({ name }) => name.toLowerCase() === this.ticker.toLowerCase())
       },
     },
     watch: {},
