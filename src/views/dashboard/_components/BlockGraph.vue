@@ -14,7 +14,7 @@
     </div>
 
     <button @click="closeGraph" type="button" class="absolute top-0 right-0">
-      <signs-cross />
+      <sign-cross />
     </button>
   </section>
 
@@ -22,12 +22,12 @@
 </template>
 
 <script>
-  import SignsCross from '@/components/signs/SignsCross'
+  import SignCross from '@/components/signs/SignCross'
 
   export default {
     name: 'BlockGraph',
     components: {
-      SignsCross,
+      SignCross,
     },
     props: {
       selectedTicker: {

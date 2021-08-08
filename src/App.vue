@@ -141,6 +141,10 @@
       </div>
     </div>
   </div>
+
+  <modal-window v-if="isOpenModal" title="Добавить тикер" @close="isOpenModal = false">
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Magnam, tempore!
+  </modal-window>
 </template>
 
 <script>
@@ -148,6 +152,7 @@
   import SignsTrash from '@/components/signs/SignsTrash'
   import BlockAdd from '@/views/dashboard/_components/BlockAdd'
   import BlockGraph from '@/views/dashboard/_components/BlockGraph'
+  import ModalWindow from '@/components/modal/ModalWindow'
 
   export default {
     name: 'App',
@@ -155,6 +160,7 @@
       BlockAdd,
       BlockGraph,
       SignsTrash,
+      ModalWindow,
     },
     data() {
       return {
@@ -165,6 +171,8 @@
         page: 1,
         countOnPage: 6,
         filter: '',
+        /* */
+        isOpenModal: false,
       }
     },
     computed: {

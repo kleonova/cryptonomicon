@@ -20,6 +20,6 @@
 
 <script>
   export default {
-    name: 'SignsCross',
+    name: 'SignCross',
   }
 </script>
