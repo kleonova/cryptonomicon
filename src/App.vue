@@ -3,105 +3,7 @@
     <div class="container mx-auto flex flex-col items-center p-4">
       <div class="container">
         <!-- field add -->
-        <section>
-          <div class="flex">
-            <div class="max-w-xs">
-              <label for="ticker" class="block text-sm font-medium text-gray-700">Тикер</label>
-
-              <div class="mt-1 relative rounded-md shadow-md">
-                <input
-                  v-model="ticker"
-                  @keydown.enter="add"
-                  type="text"
-                  name="ticker"
-                  id="ticker"
-                  class="
-                    block
-                    w-full
-                    p-2
-                    pr-10
-                    border-gray-300
-                    text-gray-900
-                    focus:outline-none focus:ring-gray-500 focus:border-gray-500
-                    sm:text-sm
-                    rounded-md
-                  "
-                  autocomplete="off"
-                  placeholder="Например DOGE"
-                />
-              </div>
-
-              <!-- autocomplete -->
-              <div
-                v-if="ticker && filteredCoinList.length"
-                class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
-              >
-                <span
-                  v-for="(coin, coinInd) in filteredCoinList"
-                  :key="coinInd"
-                  class="
-                    inline-flex
-                    items-center
-                    px-2
-                    m-1
-                    rounded-md
-                    text-xs
-                    font-medium
-                    bg-gray-300
-                    text-gray-800
-                    cursor-pointer
-                  "
-                  @click="selectAutoTicker(coin)"
-                >
-                  {{ coin.Symbol }}
-                </span>
-              </div>
-
-              <!-- clue -->
-              <div v-if="hasDuplicate" class="text-sm text-red-600">Такой тикер уже добавлен</div>
-            </div>
-          </div>
-
-          <button
-            @click="add"
-            type="button"
-            class="
-              my-4
-              inline-flex
-              items-center
-              py-2
-              px-4
-              border border-transparent
-              shadow-sm
-              text-sm
-              leading-4
-              font-medium
-              rounded-full
-              text-white
-              bg-gray-600
-              hover:bg-gray-700
-              transition-colors
-              duration-300
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
-              disabled:opacity-75
-            "
-            :disabled="!ticker || hasDuplicate"
-          >
-            <svg
-              class="-ml-0.5 mr-2 h-6 w-6"
-              xmlns="http://www.w3.org/2000/svg"
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="#ffffff"
-            >
-              <path
-                d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-              />
-            </svg>
-            Добавить
-          </button>
-        </section>
+        <block-add @add="addTicker" />
 
         <!-- filter -->
         <div class="my-2">
@@ -203,7 +105,7 @@
               </div>
               <div class="w-full border-t border-gray-200"></div>
               <button
-                @click.stop="handleDelete(t)"
+                @click.stop="deleteTicker(t)"
                 class="
                   flex
                   items-center
@@ -220,19 +122,7 @@
                   focus:outline-none
                 "
               >
-                <svg
-                  class="h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="#718096"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <signs-trash />
                 Удалить
               </button>
             </div>
@@ -240,44 +130,13 @@
           <hr class="w-full border-t border-gray-600 my-4" />
         </template>
 
-        <!--	graph			-->
-        <template v-if="selectedTicker">
-          <section class="relative">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-              {{ selectedTicker.name }} - USD
-            </h3>
-
-            <div class="flex items-end border-gray-600 border-b border-l h-64" ref="graph">
-              <div
-                v-for="(bar, indexBar) in normalizedGraph"
-                :key="indexBar"
-                class="bg-purple-800 border w-10"
-                :style="`height: ${bar}%`"
-              />
-            </div>
-
-            <button @click="selectedTicker = null" type="button" class="absolute top-0 right-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="30"
-                height="30"
-                x="0"
-                y="0"
-                viewBox="0 0 511.76 511.76"
-                xml:space="preserve"
-              >
-                <g>
-                  <path
-                    d="M436.896,74.869c-99.84-99.819-262.208-99.819-362.048,0c-99.797,99.819-99.797,262.229,0,362.048    c49.92,49.899,115.477,74.837,181.035,74.837s131.093-24.939,181.013-74.837C536.715,337.099,536.715,174.688,436.896,74.869z     M361.461,331.317c8.341,8.341,8.341,21.824,0,30.165c-4.16,4.16-9.621,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    l-75.413-75.435l-75.392,75.413c-4.181,4.16-9.643,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    c-8.341-8.341-8.341-21.845,0-30.165l75.392-75.413l-75.413-75.413c-8.341-8.341-8.341-21.845,0-30.165    c8.32-8.341,21.824-8.341,30.165,0l75.413,75.413l75.413-75.413c8.341-8.341,21.824-8.341,30.165,0    c8.341,8.32,8.341,21.824,0,30.165l-75.413,75.413L361.461,331.317z"
-                    fill="#718096"
-                    data-original="#000000"
-                  ></path>
-                </g>
-              </svg>
-            </button>
-          </section>
-          <div class="mt-2">Не принимайте график на веру! Сбит масштаб.</div>
-        </template>
+        <!-- graph -->
+        <block-graph
+          v-if="selectedTicker"
+          ref="blockGraph"
+          :selected-ticker="selectedTicker"
+          @close="selectedTicker = null"
+        />
       </div>
     </div>
   </div>
@@ -285,19 +144,22 @@
 
 <script>
   import { subscribeToTicker, unsubscribeFromTicker } from './api'
+  import SignsTrash from '@/components/signs/SignsTrash'
+  import BlockAdd from '@/views/dashboard/_components/BlockAdd'
+  import BlockGraph from '@/views/dashboard/_components/BlockGraph'
 
   export default {
     name: 'App',
+    components: {
+      BlockAdd,
+      BlockGraph,
+      SignsTrash,
+    },
     data() {
       return {
         tickers: [],
-        /* form */
-        ticker: '',
-        coinList: [],
         /* graph */
         selectedTicker: null,
-        graph: [],
-        maxGraphElements: 0,
         /* filter */
         page: 1,
         countOnPage: 6,
@@ -305,40 +167,6 @@
       }
     },
     computed: {
-      normalizedGraph() {
-        const maxValue = Math.max(...this.graph)
-        const minValue = Math.min(...this.graph)
-
-        if (maxValue === minValue) {
-          return this.graph.map(() => 50)
-        }
-
-        return this.graph.map((value) => 5 + ((value - minValue) * 95) / (maxValue - minValue))
-      },
-      filteredCoinList() {
-        const matchedCoinList = []
-        const re = new RegExp(this.ticker.toLowerCase(), 'i')
-
-        this.coinList.forEach((coin) => {
-          const found = coin.Symbol.toLowerCase().match(re)
-          if (found) {
-            matchedCoinList.push({
-              ...coin,
-              found,
-            })
-          }
-        })
-
-        matchedCoinList.sort((a, b) => {
-          if (a.found.index === b.found.index) {
-            return a.Symbol > b.Symbol ? 1 : -1
-          } else {
-            return a.found.index > b.found.index ? 1 : -1
-          }
-        })
-
-        return matchedCoinList.slice(0, 4)
-      },
       startIndex() {
         return (this.page - 1) * this.countOnPage
       },
@@ -356,9 +184,6 @@
       hasNextPage() {
         return this.filteredTickers.length > this.endIndex
       },
-      hasDuplicate() {
-        return !!this.tickers.find(({ name }) => name.toLowerCase() === this.ticker.toLowerCase())
-      },
       pageStateOptions() {
         return {
           filter: this.filter,
@@ -368,14 +193,7 @@
     },
     created() {
       this.getFilterState()
-      this.getCoinList()
       this.getTickersFromLS()
-    },
-    mounted() {
-      window.addEventListener('resize', this.calculateMaxGraphElements)
-    },
-    beforeUnmount() {
-      window.removeEventListener('resize', this.calculateMaxGraphElements)
     },
     watch: {
       tickers() {
@@ -394,24 +212,12 @@
           this.page -= 1
         }
       },
-      selectedTicker() {
-        this.graph = []
-
-        if (this.selectedTicker) {
-          this.$nextTick(() => {
-            this.calculateMaxGraphElements()
-          })
-        }
-      },
       filter() {
         this.setPage(1)
       },
-      maxGraphElements() {
-        this.cutGraph()
-      },
     },
     methods: {
-      /* */
+      /* common */
       formatPrice(price) {
         if (price === '-') {
           return price
@@ -420,52 +226,6 @@
         const floatPrice = parseFloat(price)
 
         return floatPrice > 1 ? floatPrice.toFixed(2) : floatPrice.toPrecision(2)
-      },
-      /* form */
-      async getCoinList() {
-        // Получить все доступные валюты
-        const fetchResponse = await fetch(
-          `https://min-api.cryptocompare.com/data/all/coinlist?summary=true&api_key=860436f656fb823e6b7e1d8a47e92f633c2b1c53b97538cd723426e4db835500`
-        )
-
-        const data = await fetchResponse.json()
-        if (data && data?.Data) {
-          this.coinList = Object.values(data.Data)
-        } else {
-          console.error('Ошибка при получении данных')
-        }
-      },
-      selectAutoTicker(autoTicker) {
-        this.ticker = autoTicker.Symbol
-
-        if (!this.hasDuplicate) {
-          this.add()
-        }
-      },
-      /* */
-      add() {
-        const currentTicker = {
-          name: this.ticker,
-          price: '-',
-        }
-
-        this.tickers = [...this.tickers, currentTicker]
-        this.ticker = ''
-        this.filter = ''
-        subscribeToTicker(currentTicker.name, (newPrice) =>
-          this.updateTicker(currentTicker.name, newPrice)
-        )
-      },
-      updateTicker(tickerName, price) {
-        this.tickers
-          .filter((t) => t.name === tickerName)
-          .forEach((t) => {
-            if (t === this.selectedTicker) {
-              this.graph.push(price)
-              this.cutGraph()
-            }
-            t.price = price
-          })
       },
       /* list */
       getTickersFromLS() {
@@ -477,15 +237,39 @@
             subscribeToTicker(ticker.name, (newPrice) => this.updateTicker(ticker.name, newPrice))
           })
         }
-
-        setInterval(this.updateTickers, 5000)
       },
-      handleDelete(tickerToRemove) {
+      addTicker(ticker) {
+        const currentTicker = {
+          name: ticker,
+          price: '-',
+        }
+
+        this.tickers = [...this.tickers, currentTicker]
+        this.filter = ''
+        subscribeToTicker(currentTicker.name, (newPrice) =>
+          this.updateTicker(currentTicker.name, newPrice)
+        )
+      },
+      updateTicker(tickerName, price) {
+        this.tickers
+          .filter((t) => t.name === tickerName)
+          .forEach((t) => {
+            if (t === this.selectedTicker) {
+              // todo fix
+              this.$refs.blockGraph.addColumn(price)
+            }
+            t.price = price
+          })
+      },
+      deleteTicker(tickerToRemove) {
         this.tickers = this.tickers.filter((t) => t !== tickerToRemove)
         if (this.selectedTicker === tickerToRemove) {
           this.selectedTicker = null
         }
         unsubscribeFromTicker(tickerToRemove.name)
+      },
+      selectTicker(ticker) {
+        this.selectedTicker = ticker
       },
       /* filter */
       getFilterState() {
@@ -501,19 +285,6 @@
       },
       setPage(value) {
         this.page = value
-      },
-      /* graph */
-      calculateMaxGraphElements() {
-        const widthGraph = this.$refs.graph?.clientWidth
-        this.maxGraphElements = widthGraph ? Math.floor(widthGraph / 38) : 0
-      },
-      cutGraph() {
-        if (this.graph.length > this.maxGraphElements) {
-          this.graph = this.graph.slice(-1 * this.maxGraphElements)
-        }
-      },
-      selectTicker(ticker) {
-        this.selectedTicker = ticker
       },
     },
   }
