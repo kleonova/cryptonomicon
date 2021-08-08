@@ -1,6 +1,6 @@
 <template>
   <div class="modal" @click="clickOutside">
-    <div class="modal__content" @click.stop="">
+    <div class="modal__content" @click.stop>
       <div class="modal__header">
         <h3 class="text-xl font-semibold">{{ title }}</h3>
         <button @click="close">x</button>
@@ -11,12 +11,12 @@
       </div>
 
       <div class="modal__footer">
-        <button class="text-white bg-gray-600 rounded-full py-2 px-4" @click="submitModal">
-          Ок
-        </button>
-        <button class="text-gray-500 py-2 px-4 border rounded-full ml-2" @click="close">
-          Отмена
-        </button>
+        <slot name="actions" :close="close" :confirm="confirm">
+          <button class="text-white bg-gray-600 rounded-full py-2 px-4" @click="confirm">Ок</button>
+          <button class="text-gray-500 py-2 px-4 border rounded-full ml-2" @click="close">
+            Отмена
+          </button>
+        </slot>
       </div>
     </div>
   </div>
@@ -39,13 +39,20 @@
     },
     emits: {
       close: null,
+      confirm: null,
     },
     data() {
       return {}
     },
+    mounted() {
+      document.addEventListener('keydown', this.handleKeydown)
+    },
+    beforeUnmount() {
+      document.removeEventListener('keydown', this.handleKeydown)
+    },
     methods: {
-      submitModal() {
-        console.log('submitModal')
+      confirm() {
+        this.$emit('confirm')
         this.close()
       },
       close() {
@@ -53,6 +60,11 @@
       },
       clickOutside() {
         this.close()
+      },
+      handleKeydown(e) {
+        if (e.key === 'Escape') {
+          this.close()
+        }
       },
     },
   }

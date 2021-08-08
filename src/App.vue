@@ -138,12 +138,25 @@
           :selected-ticker="selectedTicker"
           @close="selectedTicker = null"
         />
+
+        <button @click="isOpenModal = true">Открыть модальное</button>
       </div>
     </div>
   </div>
 
-  <modal-window v-if="isOpenModal" title="Добавить тикер" @close="isOpenModal = false">
+  <modal-window
+    v-if="isOpenModal"
+    title="Добавить тикер"
+    @close="handlerCloseModal"
+    @confirm="handlerConfirmModal"
+  >
     Lorem ipsum dolor sit amet, consectetur adipisicing elit. Magnam, tempore!
+
+    <template #actions="{ confirm }">
+      <button class="text-white bg-green-600 rounded-full py-2 px-4" @click="confirm()">
+        confirm
+      </button>
+    </template>
   </modal-window>
 </template>
 
@@ -294,6 +307,13 @@
       },
       setPage(value) {
         this.page = value
+      },
+      /* modal */
+      handlerCloseModal() {
+        this.isOpenModal = false
+      },
+      handlerConfirmModal() {
+        console.log('handlerConfirm')
       },
     },
   }
