@@ -143,21 +143,6 @@
       </div>
     </div>
   </div>
-
-  <modal-window
-    v-if="isOpenModal"
-    title="Добавить тикер"
-    @close="handlerCloseModal"
-    @confirm="handlerConfirmModal"
-  >
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Magnam, tempore!
-
-    <template #actions="{ confirm }">
-      <button class="text-white bg-green-600 rounded-full py-2 px-4" @click="confirm()">
-        confirm
-      </button>
-    </template>
-  </modal-window>
 </template>
 
 <script>
@@ -165,7 +150,6 @@
   import SignsTrash from '@/components/signs/SignsTrash'
   import BlockAdd from '@/views/dashboard/_components/BlockAdd'
   import BlockGraph from '@/views/dashboard/_components/BlockGraph'
-  import ModalWindow from '@/components/modal/ModalWindow'
 
   export default {
     name: 'App',
@@ -173,7 +157,6 @@
       BlockAdd,
       BlockGraph,
       SignsTrash,
-      ModalWindow,
     },
     data() {
       return {
